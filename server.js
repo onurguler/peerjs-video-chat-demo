@@ -20,6 +20,10 @@ io.on('connection', socket => {
     socket.join(roomId);
     socket.to(roomId).broadcast.emit('user-connected', userId);
     console.log('User joined room:', roomId, userId);
+
+    socket.on('disconnect', () => {
+      socket.to(roomId).broadcast.emit('user-disconnected', userId);
+    });
   });
 })
 
