@@ -34,6 +34,38 @@ navigator.mediaDevices.getUserMedia({
   });
 });
 
+// Screen sharing
+async function startCapture(displayMediaOptions) {
+  let stream = null;
+
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+    window.localStream = stream;
+    addVideoStream(myVideo, stream);
+    myPeer.on('call', call => {
+      call.answer(stream);
+      const video = document.createElement('video');
+      call.on('stream', userVideoStream => {
+        addVideoStream(video, userVideoStream);
+      });
+    });
+
+    socket.on('user-connected', userId => {
+      console.log('User connected: ' + userId);
+
+      // @FIXME: Without this settimeout, call.on('stream') now running
+      setTimeout(() => {
+        connectToNewUser(userId, stream);
+      }, 10000);
+    });
+  } catch (err) {
+    console.error("Error: " + err);
+  }
+  return stream;
+}
+
+// startCapture({ video: true, audio: true });
+
 socket.on('user-disconnected', userId => {
   console.log('User disconnected: ' + userId);
   if (peers[userId]) peers[userId].close();
